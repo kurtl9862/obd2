@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Download, History, RefreshCw, Trash2 } from 'lucide-react';
+import { Download, History, MapPin, RefreshCw, Trash2 } from 'lucide-react';
 import { Card } from '../components/Card.tsx';
 import { Sparkline } from '../components/Sparkline.tsx';
 import { deleteDrive, listDrives, type Drive } from '../lib/drives.ts';
 import { display, fmt, fmtDuration, type UnitSystem } from '../lib/units.ts';
 import { mpgFromLitersPer100km, tripTotals } from '../../../core/fuel.ts';
 import type { Unit } from '../../../core/pids.ts';
+import { projectTrack, toGpx, type TrackPoint } from '../../../core/gps.ts';
 
 /** Recorded drives: a summary, the peaks, and a CSV you can open in Numbers or Excel. */
 export function Logs({ units }: { units: UnitSystem }) {
@@ -56,6 +57,24 @@ function column(d: Drive, key: string): number[] {
   return d.rows.map((r) => r[i + 1]).filter((v): v is number => v !== null);
 }
 
+/** The drive's GPS fixes, with the car's speed at each, if location was recorded. */
+export function track(d: Drive): TrackPoint[] {
+  const lat = d.columns.findIndex((c) => c.key === 'lat');
+  const lon = d.columns.findIndex((c) => c.key === 'lon');
+  const speed = d.columns.findIndex((c) => c.key === '13');
+  if (lat === -1 || lon === -1) return [];
+  const pts: TrackPoint[] = [];
+  for (const r of d.rows) {
+    const a = r[lat + 1];
+    const b = r[lon + 1];
+    if (a === null || b === null) continue;
+    const prev = pts[pts.length - 1];
+    if (prev && prev.lat === a && prev.lon === b) continue; // parked or no new fix
+    pts.push({ t: r[0] as number, lat: a, lon: b, speedKmh: speed >= 0 ? (r[speed + 1] ?? undefined) : undefined });
+  }
+  return pts;
+}
+
 export function summarize(d: Drive) {
   const speedIdx = d.columns.findIndex((c) => c.key === '13');
   const flowIdx = d.columns.findIndex((c) => c.key === 'lph');
@@ -75,6 +94,7 @@ function DriveRow({ drive, units, onDelete }: { drive: Drive; units: UnitSystem;
   const dist = display(s.km, 'km', units);
   // Peaks of every temperature column (coolant, ATF/CVT and anything else in °C).
   const temps = drive.columns.filter((c) => c.unit === '°C');
+  const pts = track(drive);
   return (
     <div className="drive">
       <div className="drive-head">
@@ -90,6 +110,11 @@ function DriveRow({ drive, units, onDelete }: { drive: Drive; units: UnitSystem;
           <span className="pill">{units === 'us' ? `${mpgFromLitersPer100km(s.l100).toFixed(1)} mpg` : `${s.l100.toFixed(1)} L/100km`} average</span>
         )}
         <div className="drive-actions">
+          {pts.length > 1 && (
+            <button className="btn-ghost" onClick={() => downloadGpx(drive, pts)}>
+              <MapPin size={13} /> GPX
+            </button>
+          )}
           <button className="btn-ghost" onClick={() => downloadCsv(drive, units)}>
             <Download size={13} /> CSV
           </button>
@@ -117,8 +142,43 @@ function DriveRow({ drive, units, onDelete }: { drive: Drive; units: UnitSystem;
           })}
         </div>
       )}
+      {pts.length > 1 && <TrackView points={pts} units={units} />}
     </div>
   );
+}
+
+/** The route as an outline, coloured by speed (blue slow, coral fast). No map tiles, so it works offline. */
+function TrackView({ points, units }: { points: TrackPoint[]; units: UnitSystem }) {
+  const W = 320;
+  const H = 200;
+  const xy = projectTrack(points, W, H, 10);
+  const top = Math.max(1, ...points.map((p) => p.speedKmh ?? 0));
+  const colour = (v: number | undefined) => (v === undefined ? 'var(--muted)' : `color-mix(in oklab, var(--coral) ${Math.round((v / top) * 100)}%, var(--blue))`);
+  const fast = display(top, 'km/h', units);
+  return (
+    <figure className="track">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Route of this drive">
+        {xy.slice(1).map((p, i) => (
+          <line key={i} x1={xy[i].x} y1={xy[i].y} x2={p.x} y2={p.y} stroke={colour(p.speedKmh)} strokeWidth={3} strokeLinecap="round" />
+        ))}
+        <circle cx={xy[0].x} cy={xy[0].y} r={5} className="track-start" />
+        <circle cx={xy[xy.length - 1].x} cy={xy[xy.length - 1].y} r={5} className="track-end" />
+      </svg>
+      <figcaption className="muted small">
+        Start (teal) to finish (gold). Colour is speed, up to {fmt(fast.value, fast.unit)} {fast.unit}. Open the GPX in gpx.studio or Google Earth for a real map.
+      </figcaption>
+    </figure>
+  );
+}
+
+function downloadGpx(d: Drive, pts: TrackPoint[]) {
+  const name = `${d.vehicleName}, ${new Date(d.startedAt).toLocaleString()}`;
+  const blob = new Blob([toGpx(name, d.startedAt, pts)], { type: 'application/gpx+xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${d.vehicleName.replace(/\W+/g, '-').toLowerCase()}-${new Date(d.startedAt).toISOString().slice(0, 16).replace(':', '')}.gpx`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 /** One row per update; values converted to the units you're using, with units in the headers. */
@@ -130,6 +190,7 @@ export function driveCsv(d: Drive, units: UnitSystem): string {
     const cells = d.columns.map((c, i) => {
       const v = r[i + 1];
       if (v === null) return '';
+      if (c.key === 'lat' || c.key === 'lon') return v.toFixed(6);
       const shown = display(v, c.unit as Unit, units);
       return Number.isFinite(shown.value) ? shown.value.toFixed(3).replace(/\.?0+$/, '') : '';
     });

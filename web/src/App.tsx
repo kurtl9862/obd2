@@ -11,10 +11,11 @@ import { Vehicle } from './views/Vehicle.tsx';
 import { Console } from './views/Console.tsx';
 import { Explorer } from './views/Explorer.tsx';
 import { Logs } from './views/Logs.tsx';
+import { Report } from './views/Report.tsx';
 import { suggestVehicles, vehicleById, VEHICLES, withCustomExtras } from '../../core/vehicles.ts';
 import { vinMaker, vinModelYear } from '../../core/vin.ts';
 
-type View = 'connect' | 'dashboard' | 'codes' | 'readiness' | 'explorer' | 'logs' | 'vehicle' | 'console';
+type View = 'connect' | 'dashboard' | 'codes' | 'readiness' | 'report' | 'explorer' | 'logs' | 'vehicle' | 'console';
 
 export default function App() {
   const obd = useObd();
@@ -35,6 +36,7 @@ export default function App() {
     { value: 'dashboard', label: 'Dashboard', disabled: !connected },
     { value: 'codes', label: 'Codes', disabled: !connected },
     { value: 'readiness', label: 'Smog check', disabled: !connected },
+    { value: 'report', label: 'Report', disabled: !connected },
     { value: 'explorer', label: 'Explorer' },
     { value: 'logs', label: 'Logs' },
     { value: 'vehicle', label: 'Vehicle' },
@@ -101,6 +103,7 @@ export default function App() {
         {view === 'logs' && <Logs units={settings.units} />}
         {view === 'codes' && <Codes vehicle={vehicle} units={settings.units} />}
         {view === 'readiness' && <Readiness vehicle={vehicle} />}
+        {view === 'report' && <Report vehicle={vehicle} settings={settings} />}
         {view === 'vehicle' && <Vehicle vehicle={vehicle} onPick={(id) => update({ vehicleId: id })} settings={settings} update={update} />}
         {view === 'console' && <Console />}
       </main>

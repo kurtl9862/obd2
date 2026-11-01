@@ -20,6 +20,8 @@ export interface Settings {
   alarmSound: boolean;
   /** Show the fuel economy tile (needs mass airflow and speed). */
   showEconomy: boolean;
+  /** Save the laptop's location with recorded drives, for the map and GPX export. */
+  recordGps: boolean;
 }
 
 /** When the Mac helper serves the app, its WebSocket is on the same host. */
@@ -41,6 +43,7 @@ const DEFAULTS: Settings = {
   customExtras: {},
   alarmSound: true,
   showEconomy: true,
+  recordGps: true,
 };
 
 const KEY = 'obd2.settings';

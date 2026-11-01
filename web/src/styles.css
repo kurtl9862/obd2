@@ -781,3 +781,146 @@ progress {
   margin-left: 6px;
   padding: 2px 6px;
 }
+
+/* Phase 3: online lookups, report, GPS track */
+.vin-input {
+  flex: 1 1 220px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.code-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.recalls li {
+  border-top: 1px solid var(--line-soft);
+  padding: 6px 0;
+}
+.recall-head {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  width: 100%;
+}
+.recall-head:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.recall-body p {
+  margin: 6px 0;
+}
+.badge.bad,
+.bad-text {
+  color: var(--critical);
+}
+.warn-text {
+  color: var(--gold);
+}
+.flags {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.flag {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--muted);
+  background: var(--card-2);
+}
+.flag.is-bad {
+  border-color: var(--critical);
+}
+.flag.is-warn {
+  border-color: var(--gold);
+}
+.flag.is-good {
+  border-color: var(--good);
+}
+.report-head h2 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+}
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.report-table td {
+  padding: 5px 8px 5px 0;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+}
+.report-table td:last-child {
+  text-align: right;
+}
+.recall-list {
+  padding-left: 18px;
+}
+.print-only {
+  display: none;
+}
+.track {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.track svg {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  background: var(--bg-1);
+  border-radius: var(--radius-sm);
+}
+.track-start {
+  fill: var(--teal);
+}
+.track-end {
+  fill: var(--gold);
+}
+
+@media print {
+  :root {
+    --text: #111;
+    --muted: #555;
+    --line-soft: #ccc;
+    --card-2: #f4f4f4;
+    color-scheme: light;
+  }
+  body {
+    background: #fff;
+    color: #111;
+  }
+  .top,
+  .nav,
+  .banner,
+  .alarm,
+  .card-head,
+  .card-actions {
+    display: none !important;
+  }
+  .card {
+    border: none;
+    background: none;
+    box-shadow: none;
+    padding: 0;
+  }
+  main > :not(.report) {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+  .report-table,
+  .flags {
+    break-inside: avoid;
+  }
+}
