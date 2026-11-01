@@ -1,0 +1,24 @@
+{
+  "name": "obd2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A browser OBD-II app for any car, with extras for the cars we own.",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "setup": "npm install && npm --prefix web install",
+    "start": "node bridge/bridge.ts",
+    "sim": "node bridge/bridge.ts --sim",
+    "fake-adapter": "node bridge/fake-adapter.ts",
+    "dev": "npm --prefix web run dev",
+    "build": "npm --prefix web run build",
+    "test": "node --test 'core/test/*.test.ts' 'bridge/test/*.test.ts'",
+    "typecheck": "tsc -p tsconfig.json && cd web && npx tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "typescript": "^5.9.2"
+  }
+}
