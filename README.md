@@ -2,7 +2,7 @@
 
 A browser app for reading any car's OBD-II port from a laptop: live gauges, trouble codes (read and clear), smog-check readiness, VIN and freeze frame, with extras for the cars we own. Runs in Chrome or Edge, so the laptop stays online while it's connected.
 
-**Version 0.1** · Phase 1: connect and read
+**Version 0.2** · Phase 2: explore and log
 
 ## Quick start (Mac)
 
@@ -57,6 +57,25 @@ Every way of reaching the adapter implements one small `Transport` interface ([c
 
 The helper only listens on `127.0.0.1` and only accepts pages from `localhost`. To use a hosted copy of the app (for example GitHub Pages) with the helper, add `--allow-origin https://kurtl9862.github.io`.
 
+## Finding transmission temperature (Explorer)
+
+Carmakers don't publish where fluid temperature lives, so the **Explorer** finds it on your own car:
+
+1. Start with a **cold** engine (parked overnight). Connect, open **Explorer**, pick the transmission module and press **Scan**. Nissans answer service 21 (PIDs 01-FF); Hondas and most newer cars use service 22, scanned a few hundred ids at a time.
+2. Press **Start recording** and drive normally for 15-20 minutes, until the coolant is fully warm. Other screens keep working meanwhile.
+3. **Likely temperatures** ranks the bytes that started near the outside temperature and climbed with the coolant, with a guessed formula like `A-40`. Press **Use this** on the best one: it's saved to that vehicle and shows on the dashboard.
+4. Check it once against something you trust (an infrared thermometer on the pan, or a shop scan tool).
+
+**Save recording** keeps the raw data as a file, so it can be re-analyzed or shared. **Vehicle › Export profile** shares the values you found; a friend with the same car can **Import values**.
+
+## Recording drives
+
+Press **Record drive** on the dashboard. Every update is saved in the browser (IndexedDB) and keeps going if you switch screens. **Logs** shows each drive's time, distance, average fuel economy and temperature peaks, and exports a CSV in your units.
+
+Fuel economy comes from the fuel-rate PID when the car has one, otherwise from mass airflow (gasoline at 14.7:1).
+
+Any value with a limit (coolant at 110 °C / 230 °F, ATF and CVT at 105 °C / 221 °F) shows a banner and beeps when it goes over, on every screen.
+
 ## Safety
 
 - **Clearing codes** asks first, and explains that it resets smog readiness and erases freeze frame data.
@@ -74,6 +93,6 @@ npm run fake-adapter # a pretend Wi-Fi adapter on 127.0.0.1:35000
 
 ## Roadmap
 
-- **Phase 2:** transmission-module explorer to find ATF/CVT temperature on each car, temperature alarm, drive logging with CSV export, fuel economy.
+- ~~Phase 2~~ done: explorer, temperature alarm, drive logging with CSV, fuel economy, profile sharing.
 - **Phase 3:** code lookups and AI explanations online, GPS drive map, a health report to share, a Pathfinder card on Halberd.
 - Maybe: an ESP32 board that makes the Wi-Fi adapter look like a USB one.

@@ -3,7 +3,7 @@
  * `bytes` is the data after the "41 xx" echo.
  */
 
-export type Unit = '' | '°C' | 'km/h' | 'rpm' | '%' | 'kPa' | 'g/s' | 'V' | '°' | 's' | 'km' | 'L/h' | 'λ' | 'min';
+export type Unit = '' | '°C' | 'km/h' | 'rpm' | '%' | 'kPa' | 'g/s' | 'V' | '°' | 's' | 'km' | 'L/h' | 'λ' | 'min' | 'L/100km';
 
 export interface PidDef {
   pid: number;

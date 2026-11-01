@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { UnitSystem } from './units.ts';
+import type { ExtraPid } from '../../../core/vehicles.ts';
 
 export type ConnectionKind = 'wifi' | 'serial' | 'ble' | 'sim';
 
@@ -13,6 +14,12 @@ export interface Settings {
   tiles: number[] | null;
   /** Carmaker-specific values switched on, by id. */
   extras: string[];
+  /** Values found with the explorer or imported, per vehicle id. */
+  customExtras: Record<string, ExtraPid[]>;
+  /** Beep when a value with a warning limit goes over it. */
+  alarmSound: boolean;
+  /** Show the fuel economy tile (needs mass airflow and speed). */
+  showEconomy: boolean;
 }
 
 /** When the Mac helper serves the app, its WebSocket is on the same host. */
@@ -31,6 +38,9 @@ const DEFAULTS: Settings = {
   units: 'us',
   tiles: null,
   extras: [],
+  customExtras: {},
+  alarmSound: true,
+  showEconomy: true,
 };
 
 const KEY = 'obd2.settings';

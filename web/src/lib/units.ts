@@ -4,6 +4,7 @@ export type UnitSystem = 'us' | 'metric';
 
 /** Values arrive metric; show US units unless the user picks metric. */
 export function display(value: number, unit: Unit, system: UnitSystem): { value: number; unit: string } {
+  if (unit === 'L/100km' && system === 'us') return { value: value > 0 ? 235.215 / value : NaN, unit: 'mpg' };
   if (system === 'metric') return { value, unit };
   switch (unit) {
     case '°C':
@@ -24,7 +25,7 @@ export function display(value: number, unit: Unit, system: UnitSystem): { value:
 /** Sensible decimals per unit. */
 export function fmt(value: number, unit: string): string {
   if (!Number.isFinite(value)) return '–';
-  const digits = unit === 'V' || unit === 'λ' || unit === 'psi' || unit === 'gal/h' ? (unit === 'λ' ? 3 : 1) : unit === 'g/s' || unit === '%' ? 1 : 0;
+  const digits = unit === 'V' || unit === 'λ' || unit === 'psi' || unit === 'gal/h' ? (unit === 'λ' ? 3 : 1) : unit === 'g/s' || unit === '%' || unit === 'mpg' || unit === 'L/100km' ? 1 : 0;
   return value.toFixed(digits);
 }
 

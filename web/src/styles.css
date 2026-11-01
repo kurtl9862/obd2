@@ -639,3 +639,145 @@ select {
     font-size: 24px;
   }
 }
+
+/* ---------- phase 2: alarm, explorer, logs ---------- */
+.alarm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  color: #1a1204;
+  background: var(--gold);
+  border-radius: var(--radius-sm);
+  animation: alarm-pulse 1.2s ease-in-out infinite alternate;
+}
+.alarm span {
+  margin-right: auto;
+}
+.alarm .btn-ghost {
+  color: #1a1204;
+  border-color: rgb(0 0 0 / 0.25);
+}
+@keyframes alarm-pulse {
+  to {
+    filter: brightness(1.15);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alarm {
+    animation: none;
+  }
+}
+.rec-dot {
+  color: var(--critical);
+  fill: var(--critical);
+}
+.tile-note {
+  font-size: 11.5px;
+  color: var(--dim);
+}
+.form-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+.form-grid .field input {
+  width: 90px;
+  font-family: var(--mono);
+}
+.field.inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+.file-btn {
+  cursor: pointer;
+}
+progress {
+  width: 200px;
+  accent-color: var(--violet);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  padding: 4px 10px;
+  background: var(--card-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.table th {
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: middle;
+}
+.table .trend {
+  width: 120px;
+  color: var(--gold);
+}
+.table input {
+  width: 200px;
+}
+.card:has(.table) {
+  overflow-x: auto;
+}
+.drive {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--card-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+}
+.drive-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+.drive-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+.peaks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.peak {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--coral);
+}
+.peak b,
+.peak span {
+  color: var(--text);
+}
+.peak .muted {
+  color: var(--muted);
+}
+.btn-ghost.tiny {
+  margin-left: 6px;
+  padding: 2px 6px;
+}
