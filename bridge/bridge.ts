@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { acceptWebSocket, type WsConnection } from './ws.ts';
 import { SimTransport } from '../core/sim-transport.ts';
+import { RECALLS_BASE, VPIC_BASE } from '../core/nhtsa.ts';
 
 export interface BridgeOptions {
   adapterHost: string;
@@ -65,6 +66,10 @@ export function startBridge(opts: BridgeOptions) {
       res.end(JSON.stringify({ ok: true, sim: opts.sim, adapter: `${opts.adapterHost}:${opts.adapterPort}`, connected: !!active }));
       return;
     }
+    if (url.pathname.startsWith('/nhtsa/')) {
+      await proxyNhtsa(req, res, url);
+      return;
+    }
     const root = resolve(opts.webRoot);
     let path = normalize(join(root, decodeURIComponent(url.pathname)));
     if (!path.startsWith(root)) {
@@ -86,6 +91,35 @@ export function startBridge(opts: BridgeOptions) {
         res.writeHead(404, { 'content-type': 'text/plain' });
         res.end('The web app is not built yet. Run "npm run build", or use "npm run dev" for development.');
       }
+    }
+  };
+
+  /**
+   * NHTSA lookups (VIN decode, recalls) for when the browser can't reach them directly.
+   * Only these two hosts, only GET, and only for pages allowed to use the helper.
+   */
+  const proxyNhtsa = async (req: IncomingMessage, res: ServerResponse, url: URL) => {
+    const origin = req.headers.origin;
+    if (!originAllowed(origin, opts.allowOrigins) || req.method !== 'GET') {
+      res.writeHead(403).end();
+      return;
+    }
+    const cors: Record<string, string> = origin ? { 'access-control-allow-origin': origin, vary: 'origin' } : {};
+    const m = url.pathname.match(/^\/nhtsa\/(vpic|recalls)(\/[\w./-]*)$/);
+    if (!m || m[2].includes('..')) {
+      res.writeHead(404, cors).end();
+      return;
+    }
+    const target = `${m[1] === 'vpic' ? VPIC_BASE : RECALLS_BASE}${m[2]}${url.search}`;
+    try {
+      const upstream = await fetch(target, { signal: AbortSignal.timeout(10_000) });
+      const body = await upstream.text();
+      res.writeHead(upstream.status, { ...cors, 'content-type': upstream.headers.get('content-type') ?? 'application/json' });
+      res.end(body);
+    } catch (err) {
+      log(`NHTSA lookup failed: ${(err as Error).message}`);
+      res.writeHead(502, { ...cors, 'content-type': 'application/json' });
+      res.end(JSON.stringify({ error: 'The Mac helper could not reach NHTSA. Is the Mac online?' }));
     }
   };
 

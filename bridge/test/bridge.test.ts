@@ -66,3 +66,32 @@ test('an unreachable adapter closes the socket with a reason', async () => {
   assert.match((await closed) ?? '', /Can't reach the adapter/);
   server.close();
 });
+
+test('NHTSA lookups go through the helper, only to NHTSA, only for local pages', async (t) => {
+  const realFetch = globalThis.fetch;
+  const asked: string[] = [];
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    if (url.startsWith('http://127.0.0.1')) return realFetch(input, init);
+    asked.push(url);
+    return new Response(JSON.stringify({ Results: [{ Make: 'NISSAN' }] }), { headers: { 'content-type': 'application/json' } });
+  });
+  const server = await bridge(1);
+  const base = `http://127.0.0.1:${portOf(server)}`;
+
+  const ok = await fetch(`${base}/nhtsa/vpic/DecodeVinValues/5N1AR1NB0AC600001?format=json`, { headers: { origin: 'http://localhost:5173' } });
+  assert.equal(ok.status, 200);
+  assert.equal(ok.headers.get('access-control-allow-origin'), 'http://localhost:5173');
+  assert.deepEqual(await ok.json(), { Results: [{ Make: 'NISSAN' }] });
+  assert.deepEqual(asked, ['https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/5N1AR1NB0AC600001?format=json']);
+
+  await fetch(`${base}/nhtsa/recalls/recallsByVehicle?make=Nissan&model=Pathfinder&modelYear=2010`);
+  assert.equal(asked[1], 'https://api.nhtsa.gov/recalls/recallsByVehicle?make=Nissan&model=Pathfinder&modelYear=2010');
+
+  const evil = await fetch(`${base}/nhtsa/vpic/x`, { headers: { origin: 'https://evil.example' } });
+  assert.equal(evil.status, 403);
+  const other = await fetch(`${base}/nhtsa/elsewhere/x`);
+  assert.equal(other.status, 404);
+  assert.equal(asked.length, 2);
+  server.close();
+});

@@ -2,7 +2,7 @@
 
 A browser app for reading any car's OBD-II port from a laptop: live gauges, trouble codes (read and clear), smog-check readiness, VIN and freeze frame, with extras for the cars we own. Runs in Chrome or Edge, so the laptop stays online while it's connected.
 
-**Version 0.2** · Phase 2: explore and log
+**Version 0.3** · Phase 3: online extras
 
 ## Quick start (Mac)
 
@@ -35,7 +35,7 @@ Pick a vehicle at the top. Every car gets the standard OBD-II features; a profil
 
 | Profile | Extras |
 |---|---|
-| 2010 Nissan Pathfinder SE | Transmission fluid temperature from the transmission computer (7E1, service 21). The current formula is a **guess** borrowed from the Nissan Patrol; phase 2's explorer will find the real one. |
+| 2010 Nissan Pathfinder SE | Transmission fluid temperature from the transmission computer (7E1, service 21). The current formula is a **guess** borrowed from the Nissan Patrol; the Explorer (below) finds the real one. |
 | 2020 Honda Civic Sport sedan | None yet (Honda keeps CVT temperature behind service 22; to be found). |
 | 2020 Nissan Sentra SR | CVT fluid temperature, a formula shared for Nissan CVTs, **unverified** on this car. 2020+ Sentras have Nissan's security gateway, which may refuse clearing codes. |
 | Other vehicle | Standard OBD-II only. |
@@ -76,6 +76,17 @@ Fuel economy comes from the fuel-rate PID when the car has one, otherwise from m
 
 Any value with a limit (coolant at 110 °C / 230 °F, ATF and CVT at 105 °C / 221 °F) shows a banner and beeps when it goes over, on every screen.
 
+## Online extras
+
+These need internet, which the iPhone tether provides while the Mac is on the adapter's Wi-Fi.
+
+- **Vehicle › Online lookups** decodes any VIN with NHTSA (engine, transmission, drive, body) and lists recalls for that model. It works without a car connected, so you can type a friend's VIN. Recalls are per model; nhtsa.gov/recalls says whether a specific VIN was already fixed.
+- **Ask Claude** next to each trouble code opens a Claude chat with the code, its description, the module and your car already filled in.
+- **Report** reads codes, smog readiness, battery, fuel trims and other telling values, flags anything worth a look, adds open recalls, and prints or saves as a one-page PDF for a mechanic.
+- **GPS on drives:** recordings save the laptop's location (allow it once in Chrome). **Logs** draws the route coloured by speed and exports a **GPX** file for Google Earth, gpx.studio or Strava. Turn it off under Dashboard › Choose values.
+
+The browser calls NHTSA directly; if that's blocked, it retries through the Mac helper (`/nhtsa/...`), which only forwards to NHTSA's two API hosts.
+
 ## Safety
 
 - **Clearing codes** asks first, and explains that it resets smog readiness and erases freeze frame data.
@@ -94,5 +105,6 @@ npm run fake-adapter # a pretend Wi-Fi adapter on 127.0.0.1:35000
 ## Roadmap
 
 - ~~Phase 2~~ done: explorer, temperature alarm, drive logging with CSV, fuel economy, profile sharing.
-- **Phase 3:** code lookups and AI explanations online, GPS drive map, a health report to share, a Pathfinder card on Halberd.
+- ~~Phase 3~~ done: VIN decode and recalls, Ask Claude about a code, printable health report, GPS drive map with GPX.
+- Next: confirm the transmission temperature on the real truck, then a Pathfinder card on Halberd.
 - Maybe: an ESP32 board that makes the Wi-Fi adapter look like a USB one.

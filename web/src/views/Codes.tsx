@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, Camera, ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
+import { AlertTriangle, Camera, ExternalLink, RefreshCw, Sparkles, Trash2 } from 'lucide-react';
 import { Card } from '../components/Card.tsx';
 import { NotConnected } from './Dashboard.tsx';
 import { useObd } from '../lib/obd.tsx';
@@ -8,6 +8,7 @@ import { clearCodes, NegativeResponse, readCodes, readFreezeFrame, type FoundCod
 import { describeDtc, DTC_SYSTEMS, isManufacturerCode } from '../../../core/dtc.ts';
 import { PID_BY_NUMBER } from '../../../core/pids.ts';
 import { moduleName, type VehicleProfile } from '../../../core/vehicles.ts';
+import { askClaudeUrl } from '../../../core/nhtsa.ts';
 
 const KIND_LABEL = { stored: 'Stored', pending: 'Pending', permanent: 'Permanent' } as const;
 
@@ -151,6 +152,7 @@ export function Codes({ vehicle, units }: { vehicle: VehicleProfile; units: Unit
 
 function CodeRow({ code, vehicle }: { code: FoundCode; vehicle: VehicleProfile }) {
   const name = describeDtc(code.code);
+  const car = vehicle.make ? `${vehicle.name}${vehicle.engine ? ` with the ${vehicle.engine} and ${vehicle.transmission}` : ''}` : '';
   const query = encodeURIComponent(`${code.code} ${vehicle.make ? `${vehicle.year ?? ''} ${vehicle.make} ${vehicle.model}` : ''}`.trim());
   return (
     <li className={`code is-${code.kind}`}>
@@ -159,9 +161,19 @@ function CodeRow({ code, vehicle }: { code: FoundCode; vehicle: VehicleProfile }
       <span className="code-name">
         {name ?? (isManufacturerCode(code.code) ? `${DTC_SYSTEMS[code.code[0]]} code specific to the carmaker` : `${DTC_SYSTEMS[code.code[0]]} code`)}
       </span>
-      <a className="btn-ghost" href={`https://www.google.com/search?q=${query}`} target="_blank" rel="noreferrer">
-        Look up <ExternalLink size={12} />
-      </a>
+      <span className="code-actions">
+        <a
+          className="btn-ghost"
+          href={askClaudeUrl(code.code, name, car, `It's a ${KIND_LABEL[code.kind].toLowerCase()} code from the ${moduleName(vehicle, code.ecu)}.`)}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <Sparkles size={12} /> Ask Claude
+        </a>
+        <a className="btn-ghost" href={`https://www.google.com/search?q=${query}`} target="_blank" rel="noreferrer">
+          Search <ExternalLink size={12} />
+        </a>
+      </span>
     </li>
   );
 }

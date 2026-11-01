@@ -54,6 +54,11 @@ export function Dashboard({
   const [alarm, setAlarm] = useState<string | null>(null);
   const [recordingSince, setRecordingSince] = useState<number | null>(null);
   const [, tick] = useState(0);
+  // GPS for recorded drives: the Mac's location (Wi-Fi based, or the iPhone's when tethered).
+  const gps = useRef<{ lat: number; lon: number; at: number } | null>(null);
+  const gpsWatch = useRef<number | null>(null);
+  const [gpsState, setGpsState] = useState<'off' | 'waiting' | 'on' | 'denied'>('off');
+  useEffect(() => () => stopGps(), []);
 
   const pids = useMemo(() => {
     const wanted = settings.tiles ?? DEFAULT_DASHBOARD;
@@ -194,9 +199,31 @@ export function Dashboard({
     }
   }
 
+  function startGps() {
+    if (!('geolocation' in navigator)) return;
+    setGpsState('waiting');
+    gpsWatch.current = navigator.geolocation.watchPosition(
+      (p) => {
+        gps.current = { lat: p.coords.latitude, lon: p.coords.longitude, at: Date.now() };
+        setGpsState('on');
+      },
+      (err) => setGpsState(err.code === err.PERMISSION_DENIED ? 'denied' : 'waiting'),
+      { enableHighAccuracy: true, maximumAge: 5000 },
+    );
+  }
+
+  function stopGps() {
+    if (gpsWatch.current !== null) navigator.geolocation.clearWatch(gpsWatch.current);
+    gpsWatch.current = null;
+    gps.current = null;
+    setGpsState('off');
+  }
+
   function record(batch: Record<string, { value?: number }>) {
     const d = drive.current;
     if (!d) return;
+    const fix = gps.current && Date.now() - gps.current.at < 15_000 ? gps.current : null;
+    if (fix) batch = { ...batch, lat: { value: fix.lat }, lon: { value: fix.lon } };
     d.rows.push([Date.now() - d.startedAt, ...d.columns.map((c) => batch[c.key]?.value ?? null)]);
     d.endedAt = Date.now();
     if (Date.now() - lastSave.current > 15_000) {
@@ -210,7 +237,9 @@ export function Dashboard({
       ...tilesRef.current.map((t) => ({ key: t.key, name: t.name, unit: t.unit as string })),
       ...(economy ? [{ key: 'lph', name: 'Fuel flow', unit: 'L/h' }] : []),
       ...(economy && !pids.includes(SPEED) ? [{ key: String(SPEED), name: 'Vehicle speed', unit: 'km/h' }] : []),
+      ...(settings.recordGps ? [{ key: 'lat', name: 'Latitude', unit: '°' }, { key: 'lon', name: 'Longitude', unit: '°' }] : []),
     ];
+    if (settings.recordGps) startGps();
     drive.current = { vehicleId: vehicle.id, vehicleName: vehicle.name, startedAt: Date.now(), endedAt: Date.now(), columns, rows: [] };
     lastSave.current = Date.now();
     setRecordingSince(Date.now());
@@ -220,6 +249,7 @@ export function Dashboard({
     const d = drive.current;
     drive.current = null;
     setRecordingSince(null);
+    stopGps();
     if (d && d.rows.length) d.id = await saveDrive(d);
   }
 
@@ -270,7 +300,14 @@ export function Dashboard({
             <TileView key={t.key} tile={t} reading={readings[t.key]} units={settings.units} />
           ))}
         </div>
-        {recordingSince !== null && <p className="muted small">Recording. You can switch screens; it keeps going until you press Stop or disconnect.</p>}
+        {recordingSince !== null && (
+          <p className="muted small">
+            Recording. You can switch screens; it keeps going until you press Stop or disconnect.
+            {gpsState === 'on' && ' Location: on.'}
+            {gpsState === 'waiting' && ' Location: waiting for a fix.'}
+            {gpsState === 'denied' && ' Location: blocked (allow it for this site in Chrome’s address bar to map drives).'}
+          </p>
+        )}
         {pids.length > 6 && <p className="muted small">Fewer values update faster, especially on clone adapters.</p>}
       </Card>
     </div>
@@ -349,6 +386,10 @@ function TilePicker({
         <label className="check">
           <input type="checkbox" checked={settings.alarmSound} onChange={() => update({ alarmSound: !settings.alarmSound })} />
           Beep when a temperature goes over its limit
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={settings.recordGps} onChange={() => update({ recordGps: !settings.recordGps })} />
+          Save location with recorded drives (for the map and GPX)
         </label>
       </fieldset>
       <fieldset>
