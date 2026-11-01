@@ -44,6 +44,7 @@ export class FakeCar {
   stored: Record<Ecu, string[]> = { engine: ['P0420'], trans: ['P0744'] };
   pending: Record<Ecu, string[]> = { engine: ['P0171'], trans: [] };
   monitorsReset = false;
+  private counter = 0;
 
   constructor(opts: FakeCarOptions = {}) {
     this.vin = opts.vin ?? '5N1AR1NB0AC600001';
@@ -63,11 +64,17 @@ export class FakeCar {
   private speed(): number {
     return Math.max(0, 70 * Math.sin(this.t() / 9));
   }
+  rpmNow(): number {
+    return this.rpm();
+  }
+  speedNow(): number {
+    return this.speed();
+  }
   coolantC(): number {
     return Math.min(90, 20 + this.t() * 0.6);
   }
   atfC(): number {
-    return Math.min(85, 20 + this.t() * 0.35);
+    return Math.min(85, 24 + this.t() * 0.35); // starts at the intake air temperature, like a parked car
   }
 
   /** Service 01 data bytes for one PID, or null if unsupported. */
@@ -161,11 +168,15 @@ export class FakeCar {
       case 0x04: return [0x44];
       case 0x21:
         if (req[1] === 0x01) {
-          // A made-up 40-byte data block; byte 30 (AD) tracks the fluid temperature.
+          // A made-up 40-byte data block: byte 30 (AD) tracks the fluid temperature, byte 5 is a
+          // rolling counter and byte 8 follows engine speed, so the explorer has decoys to reject.
           const block = Array.from({ length: 40 }, (_, i) => (i * 37) & 0xff);
           block[29] = Math.round(this.atfC() + 40);
+          block[4] = this.counter++ & 0xff;
+          block[7] = Math.round(this.rpmNow() / 32) & 0xff;
           return [0x61, 0x01, ...block];
         }
+        if (req[1] === 0x02) return [0x61, 0x02, 0x12, 0x34, Math.round(this.speedNow()), 0x00];
         if (req[1] === 0x20) return [0x61, 0x20, atfRaw];
         return [0x7f, 0x21, 0x12];
       default:

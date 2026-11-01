@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Car } from 'lucide-react';
 import { Segmented } from './components/Segmented.tsx';
 import { useObd } from './lib/obd.tsx';
@@ -9,16 +9,21 @@ import { Codes } from './views/Codes.tsx';
 import { Readiness } from './views/Readiness.tsx';
 import { Vehicle } from './views/Vehicle.tsx';
 import { Console } from './views/Console.tsx';
-import { suggestVehicles, vehicleById, VEHICLES } from '../../core/vehicles.ts';
+import { Explorer } from './views/Explorer.tsx';
+import { Logs } from './views/Logs.tsx';
+import { Report } from './views/Report.tsx';
+import { suggestVehicles, vehicleById, VEHICLES, withCustomExtras } from '../../core/vehicles.ts';
 import { vinMaker, vinModelYear } from '../../core/vin.ts';
 
-type View = 'connect' | 'dashboard' | 'codes' | 'readiness' | 'vehicle' | 'console';
+type View = 'connect' | 'dashboard' | 'codes' | 'readiness' | 'report' | 'explorer' | 'logs' | 'vehicle' | 'console';
 
 export default function App() {
   const obd = useObd();
   const [settings, update] = useSettings();
   const [view, setView] = useState<View>('connect');
-  const vehicle = vehicleById(settings.vehicleId);
+  const custom = settings.customExtras[settings.vehicleId];
+  // Memoized: the dashboard's polling loop restarts whenever the vehicle object changes.
+  const vehicle = useMemo(() => withCustomExtras(vehicleById(settings.vehicleId), custom), [settings.vehicleId, custom]);
   const connected = obd.status === 'connected';
 
   // After connecting, offer the profile that matches the VIN if a different one is picked.
@@ -31,6 +36,9 @@ export default function App() {
     { value: 'dashboard', label: 'Dashboard', disabled: !connected },
     { value: 'codes', label: 'Codes', disabled: !connected },
     { value: 'readiness', label: 'Smog check', disabled: !connected },
+    { value: 'report', label: 'Report', disabled: !connected },
+    { value: 'explorer', label: 'Explorer' },
+    { value: 'logs', label: 'Logs' },
     { value: 'vehicle', label: 'Vehicle' },
     { value: 'console', label: 'Console' },
   ];
@@ -87,10 +95,16 @@ export default function App() {
 
       <main>
         {view === 'connect' && <Connect settings={settings} update={update} />}
-        {view === 'dashboard' && <Dashboard settings={settings} update={update} vehicle={vehicle} />}
+        {/* Dashboard and Explorer stay mounted so a recording keeps going on other screens. */}
+        <Dashboard settings={settings} update={update} vehicle={vehicle} visible={view === 'dashboard'} />
+        <div hidden={view !== 'explorer'}>
+          <Explorer key={vehicle.id} vehicle={vehicle} settings={settings} update={update} />
+        </div>
+        {view === 'logs' && <Logs units={settings.units} />}
         {view === 'codes' && <Codes vehicle={vehicle} units={settings.units} />}
         {view === 'readiness' && <Readiness vehicle={vehicle} />}
-        {view === 'vehicle' && <Vehicle vehicle={vehicle} onPick={(id) => update({ vehicleId: id })} />}
+        {view === 'report' && <Report vehicle={vehicle} settings={settings} />}
+        {view === 'vehicle' && <Vehicle vehicle={vehicle} onPick={(id) => update({ vehicleId: id })} settings={settings} update={update} />}
         {view === 'console' && <Console />}
       </main>
     </div>

@@ -158,3 +158,28 @@ export function suggestVehicles(maker: string | null, year: number | null): Vehi
 export function moduleName(profile: VehicleProfile, responseId: string): string {
   return profile.modules.find((m) => m.response === responseId)?.name ?? DEFAULT_MODULE_NAMES[responseId] ?? `Module ${responseId}`;
 }
+
+/** A profile with the values you found or imported added (yours replace built-ins with the same id). */
+export function withCustomExtras(profile: VehicleProfile, custom: ExtraPid[] | undefined): VehicleProfile {
+  if (!custom?.length) return profile;
+  const ids = new Set(custom.map((x) => x.id));
+  return { ...profile, extraPids: [...custom, ...profile.extraPids.filter((x) => !ids.has(x.id))] };
+}
+
+/** Checks an imported value before it is trusted to run against a car. */
+export function isExtraPid(x: unknown): x is ExtraPid {
+  const v = x as ExtraPid;
+  return (
+    !!v &&
+    typeof v.id === 'string' &&
+    typeof v.name === 'string' &&
+    typeof v.short === 'string' &&
+    typeof v.formula === 'string' &&
+    /^(21[0-9A-F]{2}|22[0-9A-F]{4})$/.test(v.request) &&
+    !!v.module &&
+    /^[0-9A-F]{3}$/.test(v.module.request) &&
+    /^[0-9A-F]{3}$/.test(v.module.response) &&
+    typeof v.min === 'number' &&
+    typeof v.max === 'number'
+  );
+}

@@ -76,7 +76,7 @@ test('carmaker values switch to the module and back', async () => {
   const { elm } = await connect(car);
   const pathfinder = vehicleById('pathfinder-2010');
   const atf = await readExtra(elm, pathfinder.extraPids[0]);
-  assert.equal(atf, 20, 'A-55 on the simulated block');
+  assert.equal(atf, 24, 'A-55 on the simulated block');
   const sentra = vehicleById('sentra-2020');
   const cvt = await readExtra(elm, sentra.extraPids[0]);
   assert.ok(Number.isFinite(cvt));
