@@ -6,6 +6,23 @@ A browser app for reading any car's OBD-II port from a laptop: live gauges, trou
 
 ## Quick start (Mac)
 
+Paste this into Terminal once:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/kurtl9862/obd2/main/scripts/mac/install.sh | bash
+```
+
+It finds your OBD2 folder (or downloads it to `~/obd2`), installs Node with Homebrew if it's missing, and puts an **OBD2** app in your Applications folder. From then on, just open OBD2 (double-click it, Spotlight, or drag it to the Dock). Each time it:
+
+1. gets the latest `main` from GitHub (skipped if there's no internet, for example on the adapter's Wi-Fi without the iPhone tether),
+2. installs packages and rebuilds only when something changed,
+3. starts the Mac helper in the background, or restarts it after an update,
+4. opens <http://localhost:35001> in Chrome.
+
+It only updates when the folder is on `main` with no edits of your own, so trying a branch by hand is safe. The helper keeps running after Chrome closes; `scripts/mac/launch.sh --stop` stops it, `--sim` starts it with the pretend car. Its log is `~/Library/Logs/OBD2/obd2.log`.
+
+### By hand
+
 Needs Node 22.18 or newer (`brew install node`).
 
 ```sh
