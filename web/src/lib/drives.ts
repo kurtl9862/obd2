@@ -20,7 +20,10 @@ export interface Drive {
   rows: (number | null)[][];
 }
 
-const DB = 'obd2';
+import { IS_DEMO } from './mode.ts';
+
+// Demo mode keeps its sample drives in a separate database.
+const DB = IS_DEMO ? 'obd2-demo' : 'obd2';
 const STORE = 'drives';
 
 function open(): Promise<IDBDatabase> {
@@ -46,3 +49,5 @@ function tx<T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBReque
 export const saveDrive = (d: Drive) => tx<IDBValidKey>('readwrite', (s) => s.put(d)).then((id) => id as number);
 export const listDrives = () => tx<Drive[]>('readonly', (s) => s.getAll()).then((all) => all.sort((a, b) => b.startedAt - a.startedAt));
 export const deleteDrive = (id: number) => tx<undefined>('readwrite', (s) => s.delete(id));
+export const clearDrives = () => tx<undefined>('readwrite', (s) => s.clear());
+export const countDrives = () => tx<number>('readonly', (s) => s.count());

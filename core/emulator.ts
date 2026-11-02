@@ -171,7 +171,7 @@ export class FakeCar {
           // A made-up 40-byte data block: byte 30 (AD) tracks the fluid temperature, byte 5 is a
           // rolling counter and byte 8 follows engine speed, so the explorer has decoys to reject.
           const block = Array.from({ length: 40 }, (_, i) => (i * 37) & 0xff);
-          block[29] = Math.round(this.atfC() + 40);
+          block[29] = this.transBlockTempByte();
           block[4] = this.counter++ & 0xff;
           block[7] = Math.round(this.rpmNow() / 32) & 0xff;
           return [0x61, 0x01, ...block];
@@ -182,6 +182,11 @@ export class FakeCar {
       default:
         return [0x7f, svc, 0x11];
     }
+  }
+
+  /** Byte AD of the 2101 block: the fluid temperature as the transmission computer encodes it. */
+  protected transBlockTempByte(): number {
+    return Math.round(this.atfC() + 40);
   }
 
   private codesReply(svc: number, codes: string[]): number[] {
@@ -272,8 +277,9 @@ export class FakeElm {
     for (const [id, ecu] of targets) {
       if (this.filter && this.filter !== id) continue;
       const reply = this.car.answer(ecu, req);
-      // Broadcast: modules stay quiet about services they don't support.
-      if (!reply || (this.header === '7DF' && reply[0] === 0x7f)) continue;
+      // Broadcast: modules stay quiet about services they don't support (but still refuse
+      // things they do support, like a security gateway refusing to clear codes).
+      if (!reply || (this.header === '7DF' && reply[0] === 0x7f && (reply[2] === 0x11 || reply[2] === 0x12))) continue;
       lines.push(...this.frames(id, reply));
     }
     return prefix + (lines.length ? lines.join('\r') : 'NO DATA');

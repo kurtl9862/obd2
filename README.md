@@ -18,6 +18,10 @@ Then open <http://localhost:35001> in Chrome or Edge and click **Connect**.
 
 No car handy? `npm run sim` starts the helper with a pretend car, or pick **Simulator** on the Connect screen.
 
+## Demo mode
+
+Open <http://localhost:35001/demo> to play with the whole app on made-up data: a pretend car for each vehicle (its own VIN, codes and transmission temperature), sample drives in **Logs**, and a **Driving** menu on the banner (cold start, city, highway, towing uphill; towing pushes transmission temperature past the warning). **Reset demo** brings the codes and sample drives back. The demo keeps its own settings and drives, so it never touches real logs. The demo Sentra refuses to clear codes, like the real security gateway may.
+
 ## Connecting
 
 | Adapter | How | Notes |
