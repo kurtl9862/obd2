@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Car, Cpu, Download, Globe, Search, ShieldAlert, Trash2, Upload } from 'lucide-react';
 import { Card } from '../components/Card.tsx';
+import { CarPhoto } from '../components/CarPhoto.tsx';
 import { useObd } from '../lib/obd.tsx';
 import { isExtraPid, VEHICLES, type VehicleProfile } from '../../../core/vehicles.ts';
 import type { Settings } from '../lib/settings.ts';
@@ -63,16 +64,25 @@ export function Vehicle({
   return (
     <div className="stack two-col">
       <Card title="Vehicle" icon={<Car size={14} />} accent="violet">
-        <label className="field">
-          <span>Profile</span>
-          <select value={vehicle.id} onChange={(e) => onPick(e.target.value)}>
-            {VEHICLES.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="vehicle-hero">
+          <CarPhoto vehicleId={vehicle.id} name={vehicle.name} size="hero" />
+          <div className="vehicle-hero-name">{vehicle.name}</div>
+        </div>
+        <div className="car-tiles" role="radiogroup" aria-label="Profile">
+          {VEHICLES.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              role="radio"
+              aria-checked={v.id === vehicle.id}
+              className={`car-tile${v.id === vehicle.id ? ' is-on' : ''}`}
+              onClick={() => onPick(v.id)}
+            >
+              <CarPhoto vehicleId={v.id} name="" size="tile" />
+              <span>{v.name}</span>
+            </button>
+          ))}
+        </div>
         {vehicle.make && (
           <dl className="facts">
             <dt>Engine</dt>

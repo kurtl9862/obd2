@@ -1,6 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Car } from 'lucide-react';
+import { CarPhoto } from './components/CarPhoto.tsx';
 import { Segmented } from './components/Segmented.tsx';
+import { DemoBanner } from './components/DemoBanner.tsx';
+import { IS_DEMO } from './lib/mode.ts';
+import { seedDemoDrives } from './lib/demo.ts';
 import { useObd } from './lib/obd.tsx';
 import { useSettings } from './lib/settings.ts';
 import { Connect } from './views/Connect.tsx';
@@ -20,11 +24,26 @@ type View = 'connect' | 'dashboard' | 'codes' | 'readiness' | 'report' | 'explor
 export default function App() {
   const obd = useObd();
   const [settings, update] = useSettings();
-  const [view, setView] = useState<View>('connect');
+  const [view, setView] = useState<View>(IS_DEMO ? 'dashboard' : 'connect');
   const custom = settings.customExtras[settings.vehicleId];
   // Memoized: the dashboard's polling loop restarts whenever the vehicle object changes.
   const vehicle = useMemo(() => withCustomExtras(vehicleById(settings.vehicleId), custom), [settings.vehicleId, custom]);
   const connected = obd.status === 'connected';
+
+  // Demo mode: connect to the pretend car straight away, and again for each vehicle picked.
+  const demoConnected = useRef<string | null>(null);
+  const [demoRun, setDemoRun] = useState(0);
+  const { connect } = obd;
+  useEffect(() => {
+    const key = `${settings.vehicleId}:${demoRun}`;
+    if (!IS_DEMO || demoConnected.current === key) return;
+    demoConnected.current = key;
+    void connect('sim', { ...settings, connection: 'sim' });
+  }, [settings, demoRun, connect]);
+  const resetDemo = async () => {
+    await seedDemoDrives(true);
+    setDemoRun((n) => n + 1);
+  };
 
   // After connecting, offer the profile that matches the VIN if a different one is picked.
   const suggestion = obd.vin ? suggestVehicles(vinMaker(obd.vin), vinModelYear(obd.vin))[0] : undefined;
@@ -50,15 +69,18 @@ export default function App() {
           <span className="brand-mark">
             <Car size={16} />
           </span>
-          <span>OBD2</span>
+          <span>OBD2{IS_DEMO && <span className="muted"> demo</span>}</span>
         </div>
-        <select className="vehicle-select" aria-label="Vehicle" value={vehicle.id} onChange={(e) => update({ vehicleId: e.target.value })}>
+        <div className="vehicle-pick">
+          <CarPhoto vehicleId={vehicle.id} name={vehicle.name} size="thumb" />
+          <select className="vehicle-select" aria-label="Vehicle" value={vehicle.id} onChange={(e) => update({ vehicleId: e.target.value })}>
           {VEHICLES.map((v) => (
             <option key={v.id} value={v.id}>
               {v.name}
             </option>
           ))}
-        </select>
+          </select>
+        </div>
         <div className="top-right">
           <Segmented
             label="Units"
@@ -78,6 +100,8 @@ export default function App() {
       <nav className="nav">
         <Segmented label="View" value={view} options={views} onChange={setView} />
       </nav>
+
+      {IS_DEMO && <DemoBanner onReset={() => void resetDemo()} />}
 
       {showSuggestion && (
         <div className="banner">
@@ -100,7 +124,7 @@ export default function App() {
         <div hidden={view !== 'explorer'}>
           <Explorer key={vehicle.id} vehicle={vehicle} settings={settings} update={update} />
         </div>
-        {view === 'logs' && <Logs units={settings.units} />}
+        {view === 'logs' && <Logs key={demoRun} units={settings.units} />}
         {view === 'codes' && <Codes vehicle={vehicle} units={settings.units} />}
         {view === 'readiness' && <Readiness vehicle={vehicle} />}
         {view === 'report' && <Report vehicle={vehicle} settings={settings} />}

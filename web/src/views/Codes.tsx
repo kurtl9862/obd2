@@ -23,9 +23,10 @@ export function Codes({ vehicle, units }: { vehicle: VehicleProfile; units: Unit
 
   if (obd.status !== 'connected') return <NotConnected />;
 
-  const read = async () => {
+  /** keepError: re-reading after a refused clear must not wipe the explanation. */
+  const read = async (keepError = false) => {
     setBusy(true);
-    setError(null);
+    if (!keepError) setError(null);
     try {
       setCodes(await obd.run(readCodes));
       setFrame(await obd.run(readFreezeFrame).catch(() => null));
@@ -54,7 +55,7 @@ export function Codes({ vehicle, units }: { vehicle: VehicleProfile; units: Unit
     } finally {
       setBusy(false);
     }
-    await read();
+    await read(true);
   };
 
   const byModule = new Map<string, FoundCode[]>();
