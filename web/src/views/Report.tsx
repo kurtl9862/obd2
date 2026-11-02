@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FileText, Printer, RefreshCw } from 'lucide-react';
 import { Card } from '../components/Card.tsx';
+import { CarPhoto } from '../components/CarPhoto.tsx';
 import { NotConnected } from './Dashboard.tsx';
 import { useObd } from '../lib/obd.tsx';
 import { display, fmt, type UnitSystem } from '../lib/units.ts';
@@ -83,6 +84,7 @@ export function Report({ vehicle, settings }: { vehicle: VehicleProfile; setting
                   VIN <code>{health.vin ?? 'not reported'}</code> · {new Date(health.at).toLocaleString([], { dateStyle: 'long', timeStyle: 'short' })}
                 </div>
               </div>
+              {vehicle.make && <CarPhoto vehicleId={vehicle.id} name={vehicle.name} size="tile" />}
             </header>
 
             <ul className="flags">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Car } from 'lucide-react';
+import { CarPhoto } from './components/CarPhoto.tsx';
 import { Segmented } from './components/Segmented.tsx';
 import { DemoBanner } from './components/DemoBanner.tsx';
 import { IS_DEMO } from './lib/mode.ts';
@@ -70,13 +71,16 @@ export default function App() {
           </span>
           <span>OBD2{IS_DEMO && <span className="muted"> demo</span>}</span>
         </div>
-        <select className="vehicle-select" aria-label="Vehicle" value={vehicle.id} onChange={(e) => update({ vehicleId: e.target.value })}>
+        <div className="vehicle-pick">
+          <CarPhoto vehicleId={vehicle.id} name={vehicle.name} size="thumb" />
+          <select className="vehicle-select" aria-label="Vehicle" value={vehicle.id} onChange={(e) => update({ vehicleId: e.target.value })}>
           {VEHICLES.map((v) => (
             <option key={v.id} value={v.id}>
               {v.name}
             </option>
           ))}
-        </select>
+          </select>
+        </div>
         <div className="top-right">
           <Segmented
             label="Units"

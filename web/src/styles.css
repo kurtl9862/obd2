@@ -945,3 +945,100 @@ progress {
 .demo-banner a.btn-ghost {
   text-decoration: none;
 }
+
+/* ---------- car photos ---------- */
+.car-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--dim);
+  /* A soft floor of light, so the black Civic still shows on the dark background. */
+  background: radial-gradient(closest-side at 50% 62%, rgb(255 255 255 / 0.13), transparent);
+}
+.car-photo img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.45));
+  user-select: none;
+}
+.car-photo.is-thumb {
+  width: 54px;
+  height: 30px;
+  border-radius: 8px;
+}
+.car-photo.is-tile {
+  width: 100%;
+  max-width: 160px;
+  height: 64px;
+}
+.car-photo.is-hero {
+  width: 100%;
+  height: 170px;
+}
+.car-photo.is-empty {
+  background: none;
+}
+.vehicle-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+.vehicle-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.vehicle-hero-name {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+.car-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+.car-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--muted);
+  background: var(--card-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.car-tile:hover {
+  border-color: var(--line);
+  color: var(--text);
+}
+.car-tile.is-on {
+  color: var(--text);
+  border-color: var(--violet);
+  background: color-mix(in srgb, var(--violet) 12%, var(--card-2));
+}
+.report-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.report-head .car-photo {
+  width: 150px;
+}
+@media print {
+  .car-photo {
+    background: none;
+  }
+}
+.car-photo.is-hero.is-empty {
+  height: 80px;
+}
