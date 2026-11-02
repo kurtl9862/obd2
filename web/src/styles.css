@@ -924,3 +924,24 @@ progress {
     break-inside: avoid;
   }
 }
+
+/* ---------- demo mode ---------- */
+.demo-banner {
+  background: color-mix(in srgb, var(--gold) 10%, var(--card));
+  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+}
+.demo-banner > span {
+  flex: 1 1 260px;
+}
+.demo-icon {
+  color: var(--gold);
+  flex: none;
+}
+.demo-scenario {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.demo-banner a.btn-ghost {
+  text-decoration: none;
+}

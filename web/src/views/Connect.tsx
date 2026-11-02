@@ -5,6 +5,7 @@ import { useObd } from '../lib/obd.tsx';
 import type { ConnectionKind, Settings } from '../lib/settings.ts';
 import { SerialTransport } from '../transports/serial.ts';
 import { BluetoothTransport } from '../transports/bluetooth.ts';
+import { IS_DEMO } from '../lib/mode.ts';
 
 const KINDS: { value: ConnectionKind; label: string }[] = [
   { value: 'wifi', label: 'Wi-Fi adapter' },
@@ -15,7 +16,8 @@ const KINDS: { value: ConnectionKind; label: string }[] = [
 
 export function Connect({ settings, update }: { settings: Settings; update: (p: Partial<Settings>) => void }) {
   const obd = useObd();
-  const kind = settings.connection;
+  // Demo mode only has the pretend car.
+  const kind = IS_DEMO ? 'sim' : settings.connection;
   const busy = obd.status === 'connecting';
   const connected = obd.status === 'connected';
   const unsupported =
@@ -30,7 +32,12 @@ export function Connect({ settings, update }: { settings: Settings; update: (p: 
         error={obd.status === 'error' ? obd.error : null}
         actions={connected ? <span className="pill is-good">Connected · {obd.transportLabel}</span> : null}
       >
-        <Segmented label="How the adapter connects" value={kind} options={KINDS} onChange={(v) => update({ connection: v })} />
+        <Segmented
+          label="How the adapter connects"
+          value={kind}
+          options={IS_DEMO ? KINDS.map((k) => ({ ...k, disabled: k.value !== 'sim' })) : KINDS}
+          onChange={(v) => update({ connection: v })}
+        />
 
         {kind === 'wifi' && <WifiHelp settings={settings} update={update} />}
         {kind === 'serial' && (
@@ -57,7 +64,13 @@ export function Connect({ settings, update }: { settings: Settings; update: (p: 
             pick the adapter from Chrome’s list.
           </p>
         )}
-        {kind === 'sim' && (
+        {kind === 'sim' && IS_DEMO && (
+          <p className="help">
+            <FlaskConical size={14} className="inline-icon" /> Demo mode connects to a made-up version of the vehicle picked at the top. Change
+            how it’s driving from the banner. To use a real adapter, leave the demo.
+          </p>
+        )}
+        {kind === 'sim' && !IS_DEMO && (
           <p className="help">
             <FlaskConical size={14} className="inline-icon" /> A pretend car in the browser: an engine warming up, a transmission temperature, two
             stored codes and one pending. Good for trying the app away from the truck.

@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import type { UnitSystem } from './units.ts';
 import type { ExtraPid } from '../../../core/vehicles.ts';
+import { CIVIC_DEMO_EXTRA } from '../../../core/demo-car.ts';
+import { IS_DEMO } from './mode.ts';
 
 export type ConnectionKind = 'wifi' | 'serial' | 'ble' | 'sim';
 
@@ -46,18 +48,37 @@ const DEFAULTS: Settings = {
   recordGps: true,
 };
 
-const KEY = 'obd2.settings';
+/** Demo mode: the pretend car, with every carmaker value switched on so the tiles show. */
+const DEMO_DEFAULTS: Settings = {
+  ...DEFAULTS,
+  connection: 'sim',
+  extras: ['atf-temp-guess', 'cvt-temp', CIVIC_DEMO_EXTRA.id],
+  customExtras: { 'civic-2020': [CIVIC_DEMO_EXTRA] },
+  // The sample drives already have a route; don't ask for the laptop's location.
+  recordGps: false,
+};
+
+const KEY = IS_DEMO ? 'obd2.demo.settings' : 'obd2.settings';
+const BASE = IS_DEMO ? DEMO_DEFAULTS : DEFAULTS;
 
 function load(): Settings {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS;
+    return raw ? { ...BASE, ...JSON.parse(raw) } : BASE;
   } catch {
-    return DEFAULTS;
+    return BASE;
   }
 }
 
 /** Per-browser preferences. Nothing here needs to be shared or survive a cleared browser. */
+export function clearDemoSettings() {
+  try {
+    if (IS_DEMO) localStorage.removeItem(KEY);
+  } catch {
+    // nothing saved
+  }
+}
+
 export function useSettings() {
   const [settings, setSettings] = useState<Settings>(load);
   const update = useCallback((patch: Partial<Settings>) => {

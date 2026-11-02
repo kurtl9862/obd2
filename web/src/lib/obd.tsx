@@ -7,6 +7,8 @@ import { readVin, supportedPids } from '../../../core/obd.ts';
 import { SerialTransport } from '../transports/serial.ts';
 import { BluetoothTransport } from '../transports/bluetooth.ts';
 import type { ConnectionKind, Settings } from './settings.ts';
+import { IS_DEMO } from './mode.ts';
+import { createDemoCar } from './demo.ts';
 
 export type Status = 'idle' | 'connecting' | 'connected' | 'error';
 
@@ -45,7 +47,8 @@ function makeTransport(kind: ConnectionKind, s: Settings): Transport {
     case 'ble':
       return new BluetoothTransport();
     case 'sim':
-      return new SimTransport();
+      // Demo mode: a pretend car for the picked vehicle, following the banner's scenario.
+      return IS_DEMO ? new SimTransport(createDemoCar(s.vehicleId), 15) : new SimTransport();
   }
 }
 

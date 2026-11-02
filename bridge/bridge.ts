@@ -71,7 +71,10 @@ export function startBridge(opts: BridgeOptions) {
       return;
     }
     const root = resolve(opts.webRoot);
-    let path = normalize(join(root, decodeURIComponent(url.pathname)));
+    // Demo mode lives at /demo; with a trailing slash the app asks for /demo/assets/..., which
+    // are the same files as /assets/....
+    const pathname = url.pathname.startsWith('/demo/') ? url.pathname.slice('/demo'.length) : url.pathname;
+    let path = normalize(join(root, decodeURIComponent(pathname)));
     if (!path.startsWith(root)) {
       res.writeHead(403).end();
       return;
