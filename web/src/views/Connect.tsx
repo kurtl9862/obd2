@@ -13,7 +13,15 @@ const KINDS: { value: ConnectionKind; label: string }[] = [
   { value: 'sim', label: 'Simulator' },
 ];
 
-export function Connect({ settings, update }: { settings: Settings; update: (p: Partial<Settings>) => void }) {
+export function Connect({
+  settings,
+  update,
+  onShowGuide,
+}: {
+  settings: Settings;
+  update: (p: Partial<Settings>) => void;
+  onShowGuide?: () => void;
+}) {
   const obd = useObd();
   const kind = settings.connection;
   const busy = obd.status === 'connecting';
@@ -32,7 +40,7 @@ export function Connect({ settings, update }: { settings: Settings; update: (p: 
       >
         <Segmented label="How the adapter connects" value={kind} options={KINDS} onChange={(v) => update({ connection: v })} />
 
-        {kind === 'wifi' && <WifiHelp settings={settings} update={update} />}
+        {kind === 'wifi' && <WifiHelp settings={settings} update={update} onShowGuide={onShowGuide} />}
         {kind === 'serial' && (
           <div className="help">
             <p>
@@ -96,7 +104,15 @@ export function Connect({ settings, update }: { settings: Settings; update: (p: 
   );
 }
 
-function WifiHelp({ settings, update }: { settings: Settings; update: (p: Partial<Settings>) => void }) {
+function WifiHelp({
+  settings,
+  update,
+  onShowGuide,
+}: {
+  settings: Settings;
+  update: (p: Partial<Settings>) => void;
+  onShowGuide?: () => void;
+}) {
   return (
     <div className="help">
       <p>
@@ -119,6 +135,14 @@ function WifiHelp({ settings, update }: { settings: Settings; update: (p: Partia
           In Terminal, in the <code>obd2</code> folder, run <code>npm start</code> (the Mac helper), then click Connect.
         </li>
       </ol>
+      {onShowGuide && (
+        <p>
+          First time, or something not working?{' '}
+          <button type="button" className="btn-ghost" onClick={onShowGuide}>
+            Open the full setup guide
+          </button>
+        </p>
+      )}
       <label className="field">
         <span>Mac helper address</span>
         <input value={settings.bridgeUrl} onChange={(e) => update({ bridgeUrl: e.target.value })} spellCheck={false} />

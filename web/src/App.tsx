@@ -12,10 +12,11 @@ import { Console } from './views/Console.tsx';
 import { Explorer } from './views/Explorer.tsx';
 import { Logs } from './views/Logs.tsx';
 import { Report } from './views/Report.tsx';
+import { Setup } from './views/Setup.tsx';
 import { suggestVehicles, vehicleById, VEHICLES, withCustomExtras } from '../../core/vehicles.ts';
 import { vinMaker, vinModelYear } from '../../core/vin.ts';
 
-type View = 'connect' | 'dashboard' | 'codes' | 'readiness' | 'report' | 'explorer' | 'logs' | 'vehicle' | 'console';
+type View = 'connect' | 'dashboard' | 'codes' | 'readiness' | 'report' | 'explorer' | 'logs' | 'vehicle' | 'console' | 'setup';
 
 export default function App() {
   const obd = useObd();
@@ -41,6 +42,7 @@ export default function App() {
     { value: 'logs', label: 'Logs' },
     { value: 'vehicle', label: 'Vehicle' },
     { value: 'console', label: 'Console' },
+    { value: 'setup', label: 'Setup guide' },
   ];
 
   return (
@@ -94,7 +96,7 @@ export default function App() {
       )}
 
       <main>
-        {view === 'connect' && <Connect settings={settings} update={update} />}
+        {view === 'connect' && <Connect settings={settings} update={update} onShowGuide={() => setView('setup')} />}
         {/* Dashboard and Explorer stay mounted so a recording keeps going on other screens. */}
         <Dashboard settings={settings} update={update} vehicle={vehicle} visible={view === 'dashboard'} />
         <div hidden={view !== 'explorer'}>
@@ -106,6 +108,7 @@ export default function App() {
         {view === 'report' && <Report vehicle={vehicle} settings={settings} />}
         {view === 'vehicle' && <Vehicle vehicle={vehicle} onPick={(id) => update({ vehicleId: id })} settings={settings} update={update} />}
         {view === 'console' && <Console />}
+        {view === 'setup' && <Setup />}
       </main>
     </div>
   );

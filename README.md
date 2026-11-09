@@ -29,6 +29,31 @@ No car handy? `npm run sim` starts the helper with a pretend car, or pick **Simu
 
 Safari and Firefox can't do Web Serial or Web Bluetooth; use Chrome or Edge. The Wi-Fi path works in any browser because the helper does the networking.
 
+### Setting up the MacBook, the Goliath adapter and the iPhone
+
+The same steps, with troubleshooting, are in the app under **Setup guide**.
+
+Each device has one job. The **Goliath ELM327** plugs into the car and makes its own Wi-Fi network with no internet (address `192.168.0.10`, port `35000`). The **MacBook** joins that network and runs the helper, which serves the app at <http://localhost:35001>. The **iPhone**, plugged in with Personal Hotspot on, keeps the Mac online while its Wi-Fi is busy.
+
+Once:
+
+1. `npm run setup` then `npm run build` in the `obd2` folder.
+2. Plug the iPhone into the Mac (tap **Trust** if asked) and turn on **Settings › Personal Hotspot › Allow Others to Join**.
+3. On the Mac, **System Settings › Network › … › Set Service Order**: drag **iPhone USB** above **Wi-Fi**.
+4. Adapter in the car, ignition on. Join its Wi-Fi on the Mac (often `WiFi_OBDII`, no password).
+5. `npm start`. If macOS asks to let Terminal find devices on local networks, click **Allow**.
+6. Open <http://localhost:35001> in Chrome or Edge, pick **Wi-Fi adapter**, click **Connect**.
+
+After that: ignition on, iPhone plugged in with hotspot on, Mac on the adapter's Wi-Fi, `npm start`, Connect.
+
+If it can't reach the adapter:
+
+- Check **System Settings › Privacy & Security › Local Network** has Terminal turned on.
+- If the Mac gets no address from the adapter, set Wi-Fi's **TCP/IP** to **Manually**: IP `192.168.0.11`, subnet `255.255.255.0`, **Router left empty** so internet still goes through the iPhone. Switch back to DHCP for home Wi-Fi.
+- If your adapter uses another address (some use `192.168.4.1` or port `23`): `npm start -- --adapter 192.168.4.1:35000`.
+
+The phone is the Mac's internet, not a second screen: the helper only listens on the Mac itself, so the app can't be opened from the phone. Bluetooth tethering works if there's no cable; the iPhone's Wi-Fi hotspot doesn't, because the Mac's Wi-Fi is on the adapter.
+
 ## Vehicles
 
 Pick a vehicle at the top. Every car gets the standard OBD-II features; a profile adds model-specific values and notes ([core/vehicles.ts](core/vehicles.ts)).
